@@ -14,6 +14,9 @@ class TrojanController extends Controller
     public function save(ServerTrojanSave $request)
     {
         $params = $request->validated();
+        if (isset($params['network_settings']) && is_array($params['network_settings'])) {
+            $params['network_settings'] = Helper::normalizeFallbacks($params['network_settings']);
+        }
         if ($request->input('id')) {
             $server = ServerTrojan::find($request->input('id'));
             if (!$server) {

@@ -82,6 +82,9 @@ class V2nodeController extends Controller
                 }
             }
         }
+        if (isset($params['network_settings']) && is_array($params['network_settings'])) {
+            $params['network_settings'] = Helper::normalizeFallbacks($params['network_settings']);
+        }
         if (isset($params['network_settings'])) {
             $ns = $params['network_settings'];
             if (isset($ns['acceptProxyProtocol'])) {
