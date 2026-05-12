@@ -60,8 +60,27 @@ class ServerController extends Controller
         if (!is_array($tlsSettings)) {
             $tlsSettings = [];
         }
-
-        $networkSettings = \App\Utils\Helper::normalizeFallbacks($networkSettings, true);
+        if (isset($networkSettings['fallback']) && !isset($networkSettings['fallbacks'])) {
+            $networkSettings['fallbacks'] = $networkSettings['fallback'];
+        }
+        unset($networkSettings['fallback']);
+        if (isset($networkSettings['fallbacks']) && is_string($networkSettings['fallbacks'])) {
+            $fallbacks = trim($networkSettings['fallbacks']);
+            if ($fallbacks === '') {
+                unset($networkSettings['fallbacks']);
+            } elseif (in_array(substr($fallbacks, 0, 1), ['[', '{'])) {
+                $fallbacks = json_decode($fallbacks, true);
+                if (empty($fallbacks)) {
+                    unset($networkSettings['fallbacks']);
+                } else {
+                    $networkSettings['fallbacks'] = isset($fallbacks['dest']) ? [$fallbacks] : $fallbacks;
+                }
+            } else {
+                $networkSettings['fallbacks'] = [['dest' => $fallbacks]];
+            }
+        } elseif (isset($networkSettings['fallbacks']) && is_array($networkSettings['fallbacks']) && isset($networkSettings['fallbacks']['dest'])) {
+            $networkSettings['fallbacks'] = [$networkSettings['fallbacks']];
+        }
 
         $response = [
             'listen_ip' => $this->nodeInfo->listen_ip,

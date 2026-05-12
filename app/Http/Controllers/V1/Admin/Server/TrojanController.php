@@ -15,7 +15,29 @@ class TrojanController extends Controller
     {
         $params = $request->validated();
         if (isset($params['network_settings']) && is_array($params['network_settings'])) {
-            $params['network_settings'] = Helper::normalizeFallbacks($params['network_settings']);
+            $ns = $params['network_settings'];
+            if (isset($ns['fallback']) && !isset($ns['fallbacks'])) {
+                $ns['fallbacks'] = $ns['fallback'];
+            }
+            unset($ns['fallback']);
+            if (isset($ns['fallbacks']) && is_string($ns['fallbacks'])) {
+                $fallbacks = trim($ns['fallbacks']);
+                if ($fallbacks === '') {
+                    unset($ns['fallbacks']);
+                } elseif (in_array(substr($fallbacks, 0, 1), ['[', '{'])) {
+                    $fallbacks = json_decode($fallbacks, true);
+                    if (empty($fallbacks)) {
+                        unset($ns['fallbacks']);
+                    } else {
+                        $ns['fallbacks'] = isset($fallbacks['dest']) ? [$fallbacks] : $fallbacks;
+                    }
+                } else {
+                    $ns['fallbacks'] = [['dest' => $fallbacks]];
+                }
+            } elseif (isset($ns['fallbacks']) && is_array($ns['fallbacks']) && isset($ns['fallbacks']['dest'])) {
+                $ns['fallbacks'] = [$ns['fallbacks']];
+            }
+            $params['network_settings'] = $ns;
         }
         if ($request->input('id')) {
             $server = ServerTrojan::find($request->input('id'));
